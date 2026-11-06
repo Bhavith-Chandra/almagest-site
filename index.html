@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Tinos:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts.css">
-<link rel="stylesheet" href="assets/style.css?v=8">
+<link rel="stylesheet" href="assets/style.css?v=s5">
 </head>
 <body>
 <div class="page">
@@ -31,6 +31,21 @@
   <section class="abstract">
     <h2>Almagest</h2>
     <p>We build world models of financial markets that answer one question: <em>what happens if I act?</em> A world model is a learned simulator. Given the state of a market and a proposed action, it imagines what follows, so decisions can be rehearsed before they are made. And because a decision is only as good as its reasons, every imagined future can be opened up and explained.</p>
+  </section>
+
+  <section class="scrolly" id="scrolly" aria-label="How a world model works, step by step">
+    <div class="sc-stage">
+      <canvas height="800" aria-hidden="true"></canvas>
+      <div class="sc-cards">
+        <div class="sc-step"><p class="sc-n">01 / 06 &middot; State</p><h4>A market is a state.</h4><p>This is the real chip-stock index from April to 5 November 2026: a peak in June, then the AI selloff. Everything that follows starts here.</p></div>
+        <div class="sc-step"><p class="sc-n">02 / 06 &middot; Encode</p><h4>Compress the past.</h4><p>A world model condenses the recent past into a compact state: a short list of numbers that keeps what matters for what happens next and drops the noise.</p></div>
+        <div class="sc-step"><p class="sc-n">03 / 06 &middot; Act</p><h4>Add an action.</h4><p>Now ask a question with consequences: what if I buy $100,000 of chip stocks today, and sell if I am down 15&thinsp;%?</p></div>
+        <div class="sc-step"><p class="sc-n">04 / 06 &middot; Roll out</p><h4>Imagine what follows.</h4><p>From that state and that action, the model rolls the market forward: eighteen plausible worlds, three hundred futures each, weighed by how likely they are.</p></div>
+        <div class="sc-step"><p class="sc-n">05 / 06 &middot; Explain</p><h4>Open any future.</h4><p>Every path has a reason. In the data-centre pause world, a policy shock arrives overnight and jumps straight past the stop-loss.</p></div>
+        <div class="sc-step"><p class="sc-n">06 / 06 &middot; Decide</p><h4>Fix what fails.</h4><p>Collect every outcome. Where the rule breaks, change it: insure against the whole market and sell sooner. Same worlds, smaller losses. <a href="case.html">Open the case study &#8599;</a></p></div>
+      </div>
+      <div class="sc-rail"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
   </section>
 
   <section class="body">
@@ -87,5 +102,9 @@
     else { a.removeAttribute("href"); if (id === "contact-link") a.textContent = "opening soon"; }
   }
 </script>
+<script src="assets/console.js?v=s5"></script>
+<script src="assets/market.js?v=s5"></script>
+<script src="assets/worlds.js?v=s5"></script>
+<script src="assets/scroll.js?v=s5"></script>
 </body>
 </html>
