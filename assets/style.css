@@ -246,23 +246,38 @@ b.l, td.l { color: var(--c-loss); }
 .sc-stage canvas { position: absolute; inset: 0; width: 100%; display: block; }
 .sc-stage::after { content: ""; position: absolute; inset: 0 auto 0 0; width: 46%; pointer-events: none;
   background: linear-gradient(90deg, rgba(255,255,255,.96) 0%, rgba(255,255,255,.86) 52%, rgba(255,255,255,0) 100%); }
-.sc-cards { position: absolute; z-index: 2; left: 5vw; top: 50%; transform: translateY(-50%); width: min(380px, 31vw); height: 320px; }
+.sc-cards { position: absolute; z-index: 2; left: calc(5vw + 168px); top: 50%; transform: translateY(-50%); width: min(360px, 26vw); height: 340px; }
+/* an edgeless cushion behind the floating text: invisible as a shape, but nothing behind it can compete */
+.sc-cards::before { content: ""; position: absolute; z-index: -1; inset: -80px -110px -70px -70px; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255,255,255,.97) 0%, rgba(255,255,255,.94) 58%, rgba(255,255,255,0) 100%);
+  -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px);
+  -webkit-mask-image: radial-gradient(closest-side, #000 58%, transparent 100%); mask-image: radial-gradient(closest-side, #000 58%, transparent 100%); }
 .sc-step { position: absolute; inset: 0 0 auto 0; opacity: 0; transform: translateY(18px); filter: blur(4px);
   transition: opacity .6s ease, transform .6s cubic-bezier(.2,.7,.2,1), filter .6s ease; pointer-events: none; }
 .sc-step.on { opacity: 1; transform: none; filter: none; pointer-events: auto; animation: sc-float 7s ease-in-out infinite; }
 @keyframes sc-float { 50% { transform: translateY(-5px); } }
-.sc-n { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin: 0 0 14px; }
 .sc-step h4 { font-family: var(--serif); font-weight: 400; font-variant: small-caps; font-size: 38px; line-height: 1.04; color: #000; margin: 0 0 14px;
   text-shadow: 0 0 18px #fff, 0 0 6px #fff; }
-.sc-step p { font-size: 18px; line-height: 26px; margin: 0; text-align: left; color: #2a2a2a; text-shadow: 0 0 14px #fff, 0 0 4px #fff, 0 0 2px #fff; }
-.sc-rail { position: absolute; z-index: 2; left: 5vw; bottom: 40px; display: flex; gap: 6px; }
-.sc-rail i { display: block; width: 30px; height: 2px; background: #e2e2e2; transition: background .4s; }
-.sc-rail i.on { background: #000; }
+.sc-step p { font-size: 18.5px; line-height: 27px; margin: 0; text-align: left; color: #141414; text-shadow: 0 0 14px #fff, 0 0 4px #fff, 0 0 2px #fff; }
+/* step flow: a vertical timeline beside the caption */
+.sc-flow { position: absolute; z-index: 3; left: 5vw; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 15px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding-left: 20px; }
+.sc-flow::before { content: ""; position: absolute; left: 4px; top: 6px; bottom: 6px; width: 1px; background: #e0e0e0; }
+.sc-flow span { position: relative; color: #b5b5b5; white-space: nowrap; line-height: 14px; transition: color .4s; }
+.sc-flow span::after { content: ""; position: absolute; left: -20px; top: 3px; width: 7px; height: 7px; border-radius: 50%; background: #fff; border: 1px solid #cfcfcf; transition: all .4s; }
+.sc-flow span.done { color: #4a4a4a; }
+.sc-flow span.done::after { background: #4a4a4a; border-color: #4a4a4a; }
+.sc-flow span.on { color: var(--accent); font-weight: 600; }
+.sc-flow span.on::after { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 4px rgba(33,16,174,.12); transform: scale(1.15); }
 @media (max-width: 760px) {
   .sc-stage::after { inset: 0 0 auto 0; width: auto; height: 44%; background: linear-gradient(180deg, rgba(255,255,255,.97) 0%, rgba(255,255,255,.9) 60%, rgba(255,255,255,0) 100%); }
-  .sc-cards { left: 18px; right: 18px; top: 22px; transform: none; width: auto; height: 36vh; }
+  .sc-cards { left: 18px; right: 18px; top: 66px; transform: none; width: auto; height: 34vh; }
   .sc-step h4 { font-size: 27px; }
   .sc-step p { font-size: 15.5px; line-height: 22px; }
-  .sc-rail { left: 18px; bottom: 22px; }
+  .sc-cards::before { inset: -30px -24px -40px -24px; }
+  .sc-flow { left: 18px; right: 18px; top: 18px; transform: none; flex-direction: row; flex-wrap: wrap; gap: 4px 0; padding-left: 0; font-size: 9.5px; }
+  .sc-flow::before { display: none; }
+  .sc-flow span::after { display: none; }
+  .sc-flow span + span::before { content: "\2192"; margin: 0 5px; color: #cfcfcf; }
 }
 @media (prefers-reduced-motion: reduce) { .sc-step, .sc-step.on { transition: none; animation: none; filter: none; } }

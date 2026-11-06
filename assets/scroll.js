@@ -6,7 +6,7 @@
   const sec = document.getElementById("scrolly");
   if (!sec || !window.Con || !window.MARKET || !window.WORLDS) return;
   const { C } = Con, W = window.WORLDS, F = window.FAMILIES;
-  const cv = sec.querySelector("canvas"), cards = [...sec.querySelectorAll(".sc-step")], rail = [...sec.querySelectorAll(".sc-rail i")];
+  const cv = sec.querySelector("canvas"), cards = [...sec.querySelectorAll(".sc-step")], flow = [...sec.querySelectorAll(".sc-flow span")];
   const STEPS = cards.length, NAMES = ["STATE", "ENCODE", "ACT", "ROLL OUT", "AUDIT", "EXPLAIN", "LOOK INSIDE", "DECIDE"];
   const DAYS = 20, PATHS = 300, BETA = 1.6, SHOW = 12, LATENT = 32, ACCOUNT = 100000;
   const HIST = window.MARKET.sox.map(r => r[1]), DATES = window.MARKET.sox.map(r => r[0]);
@@ -87,7 +87,7 @@
       { x: (xs + XH) / 2 + 20, y: mid, s: 1 + 0.22 * z },
       { x: (xs + XH) / 2 - 30, y: mid, s: 1 + 0.32 * z },
       { x: xf(8), y: y(m[8]), s: 1 + 0.55 * z },
-      { x: (X0 + XH) / 2, y: (SY0 + SY1) / 2 + 10, s: 1 + 0.3 * z },
+      { x: (X0 + XH) / 2, y: narrow ? SY0 + 150 : (SY0 + SY1) / 2 + 10, s: narrow ? 1 : 1.3 },
       { x: narrow ? (X0 + XH) / 2 : (X0 + w - 30) / 2, y: mid, s: narrow ? 1 : 0.93 },
     ];
   }
@@ -147,7 +147,7 @@
       });
     }
     cards.forEach((c, i) => c.classList.toggle("on", i === cur));
-    rail.forEach((d, i) => d.classList.toggle("on", i <= cur));
+    flow.forEach((d, i) => { d.classList.toggle("done", i < cur); d.classList.toggle("on", i === cur); });
   }
 
   // ---------------- layers ----------------
@@ -292,13 +292,44 @@
   }
 
   // look inside: the model's parts, a probe of the state, and a blind spot found by reverse-engineering
+  // phones: the same four parts as a U-shaped 2 × 2 flow, with the findings stacked underneath
+  function layerInsideNarrow(ctx, G, a, k) {
+    const { X0, XH, SY0 } = G, H = 50, gapX = 22, gapY = 34, bw = (XH - X0 - gapX) / 2, y0 = SY0 + 34;
+    const pos = [[0, 0], [1, 0], [1, 1], [0, 1]], parts = [["ENCODER", "past → z"], ["STATE  z", "32 numbers"], ["DYNAMICS", "f(z, a) × 20"], ["DECODER", "z → prices"]];
+    const box = i => [X0 + pos[i][0] * (bw + gapX), y0 + pos[i][1] * (H + gapY)];
+    const arrow = (x1, y1, x2, y2) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); const an = Math.atan2(y2 - y1, x2 - x1);
+      ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x2 - 6 * Math.cos(an - 0.5), y2 - 6 * Math.sin(an - 0.5)); ctx.lineTo(x2 - 6 * Math.cos(an + 0.5), y2 - 6 * Math.sin(an + 0.5)); ctx.closePath(); ctx.fill(); };
+    ctx.globalAlpha = a; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+    ctx.font = font(9.5, 600); ctx.fillStyle = C.dim; ctx.fillText("INSIDE THE WORLD MODEL (SCHEMATIC)", X0, SY0 + 10);
+    parts.forEach(([name, sub], i) => {
+      const [bx, by] = box(i); ctx.globalAlpha = a * Math.max(0.35, clamp((k - i * 0.1) * 4));
+      ctx.fillStyle = i === 2 ? "#fbfaff" : "#fff"; ctx.fillRect(bx, by, bw, H);
+      ctx.strokeStyle = i === 2 ? C.blue : C.ink; ctx.lineWidth = LW(1.2); ctx.strokeRect(bx, by, bw, H);
+      ctx.fillStyle = C.ink; ctx.font = font(10, 600); ctx.fillText(name, bx + 9, by + 17);
+      ctx.fillStyle = C.dim; ctx.font = font(9.5); ctx.fillText(sub, bx + 9, by + 35);
+    });
+    ctx.globalAlpha = a; ctx.strokeStyle = C.ink; ctx.fillStyle = C.ink; ctx.lineWidth = LW(1);
+    const [e0x, e0y] = box(0), [s0x, s0y] = box(1), [d0x, d0y] = box(2), [r0x, r0y] = box(3);
+    arrow(e0x + bw + 2, e0y + H / 2, s0x - 3, s0y + H / 2);
+    arrow(s0x + bw / 2, s0y + H + 2, d0x + bw / 2, d0y - 3);
+    arrow(d0x - 2, d0y + H / 2, r0x + bw + 3, r0y + H / 2);
+    const ny = r0y + H + 30, notes = [["PROBE", "drawdown cells track financing stress", C.gain, 0.35], ["BLIND SPOT", "smooth steps only: overnight gaps missed", C.loss, 0.6], ["FIX", "add a jump term to the dynamics", C.blue, 0.8]];
+    notes.forEach(([lab, txt, col, at], i) => {
+      const o = clamp((k - at) * 4); if (o <= 0) return;
+      ctx.globalAlpha = a * o; ctx.font = font(9.5, 600); ctx.fillStyle = col; ctx.fillText(lab, X0, ny + i * 34);
+      ctx.font = font(10); ctx.fillStyle = C.ink; ctx.fillText(txt, X0, ny + i * 34 + 15);
+    });
+    ctx.globalAlpha = 1;
+  }
+
   function layerInside(ctx, G, a, k) {
+    if (G.narrow) return layerInsideNarrow(ctx, G, a, k);
     const { X0, XH, SY0, narrow } = G, H = 64, yb = SY0 + 40;
     const parts = [["ENCODER", "60 days of prices → z"], ["STATE  z", "32 numbers"], ["DYNAMICS  f(z, a)", "one step = one day"], ["DECODER", "z → prices, 20 days"]];
     const gapX = 26, bw = (XH - X0 - gapX * 3) / 4;
     ctx.globalAlpha = a; ctx.textBaseline = "middle";
     ctx.font = font(10, 600); ctx.fillStyle = C.dim; ctx.textAlign = "left"; ctx.fillText("INSIDE THE WORLD MODEL (SCHEMATIC)", X0, SY0 + 8);
-    if (k > 0 && k < 1) { G.hud.push(["LOOK INSIDE · REVERSE-ENGINEERING THE MODEL", C.dim, 10.5, 500]); G.hud.push(["probe each part → find blind spots → fix the architecture", C.ink, 13, 600]); }
+    if (k > 0 && k < 1) { G.hud.push(["LOOK INSIDE · REVERSE-ENGINEERING THE MODEL", C.dim, 10.5, 500]); G.hud.push([G.narrow ? "probe → blind spot → fix" : "probe each part → find blind spots → fix the architecture", C.ink, 13, 600]); }
     parts.forEach(([name, sub], i) => {
       const bx = X0 + i * (bw + gapX), on = clamp((k - i * 0.1) * 4);
       ctx.globalAlpha = a * Math.max(0.35, on);

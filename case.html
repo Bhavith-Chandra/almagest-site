@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Tinos:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts.css">
-<link rel="stylesheet" href="assets/style.css?v=c2">
+<link rel="stylesheet" href="assets/style.css?v=f3">
 </head>
 <body>
 <div class="page">
@@ -35,17 +35,17 @@
   <section class="scrolly" id="scrolly" aria-label="How a world model works, step by step">
     <div class="sc-stage">
       <canvas height="800" aria-hidden="true"></canvas>
+      <div class="sc-flow" aria-label="Steps"><span>State</span><span>Encode</span><span>Act</span><span>Roll out</span><span>Audit</span><span>Explain</span><span>Look inside</span><span>Decide</span></div>
       <div class="sc-cards">
-        <div class="sc-step"><p class="sc-n">01 / 08 &middot; State</p><h4>A market is a state.</h4><p>The real chip-stock index from April to today: a peak in June, then the AI selloff. Everything that follows starts here.</p></div>
-        <div class="sc-step"><p class="sc-n">02 / 08 &middot; Encode</p><h4>Compress the past.</h4><p>The world model condenses the last sixty days into a compact state: momentum, volatility, drawdown and macro context, thirty-two numbers in all.</p></div>
-        <div class="sc-step"><p class="sc-n">03 / 08 &middot; Act</p><h4>Add an action.</h4><p>Ask a question with consequences: what if I buy $100,000 of chip stocks today, and sell if I am down 15&thinsp;%?</p></div>
-        <div class="sc-step"><p class="sc-n">04 / 08 &middot; Roll out</p><h4>Imagine what follows.</h4><p>From that state and that action, the model rolls the market forward: eighteen plausible worlds, three hundred futures each.</p></div>
-        <div class="sc-step"><p class="sc-n">05 / 08 &middot; Audit</p><h4>Audit every world.</h4><p>Keep scrolling to step through all eighteen. Each world shows how likely it is, its chain of causes, and which part of the state it depends on. Nothing is a black box.</p></div>
-        <div class="sc-step"><p class="sc-n">06 / 08 &middot; Explain</p><h4>Open any future.</h4><p>In the data-centre pause world, a policy shock arrives overnight and jumps straight past the stop-loss. The reason is visible, step by step.</p></div>
-        <div class="sc-step"><p class="sc-n">07 / 08 &middot; Look inside</p><h4>Reverse-engineer the model.</h4><p>Interpretability works on the model too. Probe what each part of the state encodes, find where the dynamics are blind, such as overnight jumps, and change the architecture. Better explanations make better models.</p></div>
-        <div class="sc-step"><p class="sc-n">08 / 08 &middot; Decide</p><h4>Fix what fails.</h4><p>Collect every outcome. Where the rule breaks, change it: insure against the whole market and sell sooner. Same worlds, smaller losses. Below, you can do it yourself.</p></div>
+        <div class="sc-step"><h4>A market is a state.</h4><p>The real chip-stock index from April to today: a peak in June, then the AI selloff. Everything that follows starts here.</p></div>
+        <div class="sc-step"><h4>Compress the past.</h4><p>The world model condenses the last sixty days into a compact state: momentum, volatility, drawdown and macro context, thirty-two numbers in all.</p></div>
+        <div class="sc-step"><h4>Add an action.</h4><p>Ask a question with consequences: what if I buy $100,000 of chip stocks today, and sell if I am down 15&thinsp;%?</p></div>
+        <div class="sc-step"><h4>Imagine what follows.</h4><p>From that state and that action, the model rolls the market forward: eighteen plausible worlds, three hundred futures each.</p></div>
+        <div class="sc-step"><h4>Audit every world.</h4><p>Keep scrolling to step through all eighteen. Each world shows how likely it is, its chain of causes, and which part of the state it depends on. Nothing is a black box.</p></div>
+        <div class="sc-step"><h4>Open any future.</h4><p>In the data-centre pause world, a policy shock arrives overnight and jumps straight past the stop-loss. The reason is visible, step by step.</p></div>
+        <div class="sc-step"><h4>Reverse-engineer the model.</h4><p>Interpretability works on the model too. Probe what each part of the state encodes, find where the dynamics are blind, such as overnight jumps, and change the architecture. Better explanations make better models.</p></div>
+        <div class="sc-step"><h4>Fix what fails.</h4><p>Collect every outcome. Where the rule breaks, change it: insure against the whole market and sell sooner. Same worlds, smaller losses. Below, you can do it yourself.</p></div>
       </div>
-      <div class="sc-rail"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     </div>
   </section>
 
@@ -144,6 +144,6 @@
 <script src="assets/worlds.js?v=11"></script>
 <script src="assets/console.js?v=11"></script>
 <script src="assets/case.js?v=11"></script>
-<script src="assets/scroll.js?v=c4"></script>
+<script src="assets/scroll.js?v=f3"></script>
 </body>
 </html>
