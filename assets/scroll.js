@@ -6,7 +6,7 @@
   const sec = document.getElementById("scrolly");
   if (!sec || !window.Con || !window.MARKET || !window.WORLDS) return;
   const { C } = Con, W = window.WORLDS, F = window.FAMILIES;
-  const cv = sec.querySelector("canvas"), cards = [...sec.querySelectorAll(".sc-step")], rail = [...sec.querySelectorAll(".sc-rail i")];
+  const cv = sec.querySelector("canvas"), cards = [...sec.querySelectorAll(".sc-step")], flow = [...sec.querySelectorAll(".sc-flow span")];
   const STEPS = cards.length, NAMES = ["STATE", "ENCODE", "ACT", "ROLL OUT", "AUDIT", "EXPLAIN", "LOOK INSIDE", "DECIDE"];
   const DAYS = 20, PATHS = 300, BETA = 1.6, SHOW = 12, LATENT = 32, ACCOUNT = 100000;
   const HIST = window.MARKET.sox.map(r => r[1]), DATES = window.MARKET.sox.map(r => r[0]);
@@ -72,7 +72,7 @@
     const xh = i => X0 + i / (HIST.length - 1) * (xs - X0), xf = d => xs + d / DAYS * (XH - xs);
     const cell = narrow ? 7 : 10, gap = 2, COLS = 4, ROWS = 8, blkH = ROWS * (cell + gap), blkW = COLS * (cell + gap);
     const by0 = clamp(y(TODAY) - blkH / 2 - 70, T + 10, B - blkH), bx0 = xs - blkW - 14;
-    const SY0 = B + 110, SY1 = SY0 + 190;
+    const SY0 = B + 110, SY1 = SY0 + 230;
     return { narrow, X0, XH, T, B, xs, lo, hi, y, xh, xf, cell, gap, COLS, blkH, blkW, bx0, by0, SY0, SY1, w, h,
       cellX: i => bx0 + (i % COLS) * (cell + gap), cellY: i => by0 + Math.floor(i / COLS) * (cell + gap) };
   }
@@ -87,7 +87,7 @@
       { x: (xs + XH) / 2 + 20, y: mid, s: 1 + 0.22 * z },
       { x: (xs + XH) / 2 - 30, y: mid, s: 1 + 0.32 * z },
       { x: xf(8), y: y(m[8]), s: 1 + 0.55 * z },
-      { x: (X0 + XH) / 2, y: (SY0 + SY1) / 2 + 10, s: 1 + 0.3 * z },
+      { x: narrow ? (X0 + XH) / 2 : (X0 + XH) / 2 - 34, y: narrow ? SY0 + 150 : SY0 + 128, s: narrow ? 1 : 1.1 },
       { x: narrow ? (X0 + XH) / 2 : (X0 + w - 30) / 2, y: mid, s: narrow ? 1 : 0.93 },
     ];
   }
@@ -147,7 +147,7 @@
       });
     }
     cards.forEach((c, i) => c.classList.toggle("on", i === cur));
-    rail.forEach((d, i) => d.classList.toggle("on", i <= cur));
+    flow.forEach((d, i) => { d.classList.toggle("done", i < cur); d.classList.toggle("on", i === cur); });
   }
 
   // ---------------- layers ----------------
@@ -292,48 +292,163 @@
   }
 
   // look inside: the model's parts, a probe of the state, and a blind spot found by reverse-engineering
-  function layerInside(ctx, G, a, k) {
-    const { X0, XH, SY0, narrow } = G, H = 64, yb = SY0 + 40;
-    const parts = [["ENCODER", "60 days of prices → z"], ["STATE  z", "32 numbers"], ["DYNAMICS  f(z, a)", "one step = one day"], ["DECODER", "z → prices, 20 days"]];
-    const gapX = 26, bw = (XH - X0 - gapX * 3) / 4;
-    ctx.globalAlpha = a; ctx.textBaseline = "middle";
-    ctx.font = font(10, 600); ctx.fillStyle = C.dim; ctx.textAlign = "left"; ctx.fillText("INSIDE THE WORLD MODEL (SCHEMATIC)", X0, SY0 + 8);
-    if (k > 0 && k < 1) { G.hud.push(["LOOK INSIDE · REVERSE-ENGINEERING THE MODEL", C.dim, 10.5, 500]); G.hud.push(["probe each part → find blind spots → fix the architecture", C.ink, 13, 600]); }
+  // phones: the same four parts as a U-shaped 2 × 2 flow, with the findings stacked underneath
+  function layerInsideNarrow(ctx, G, a, k) {
+    const { X0, XH, SY0 } = G, H = 50, gapX = 22, gapY = 34, bw = (XH - X0 - gapX) / 2, y0 = SY0 + 34;
+    const pos = [[0, 0], [1, 0], [1, 1], [0, 1]], parts = [["ENCODER", "past → z"], ["STATE  z", "32 numbers"], ["DYNAMICS", "f(z, a) × 20"], ["DECODER", "z → prices"]];
+    const box = i => [X0 + pos[i][0] * (bw + gapX), y0 + pos[i][1] * (H + gapY)];
+    const arrow = (x1, y1, x2, y2) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); const an = Math.atan2(y2 - y1, x2 - x1);
+      ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x2 - 6 * Math.cos(an - 0.5), y2 - 6 * Math.sin(an - 0.5)); ctx.lineTo(x2 - 6 * Math.cos(an + 0.5), y2 - 6 * Math.sin(an + 0.5)); ctx.closePath(); ctx.fill(); };
+    ctx.globalAlpha = a; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+    ctx.font = font(9.5, 600); ctx.fillStyle = C.dim; ctx.fillText("INSIDE THE WORLD MODEL (SCHEMATIC)", X0, SY0 + 10);
     parts.forEach(([name, sub], i) => {
-      const bx = X0 + i * (bw + gapX), on = clamp((k - i * 0.1) * 4);
-      ctx.globalAlpha = a * Math.max(0.35, on);
-      ctx.fillStyle = i === 2 ? "#fbfaff" : "#fff"; ctx.fillRect(bx, yb, bw, H);
-      ctx.strokeStyle = i === 2 ? C.blue : C.ink; ctx.lineWidth = LW(1.2); ctx.strokeRect(bx, yb, bw, H);
-      ctx.fillStyle = C.ink; ctx.font = font(narrow ? 9 : 11, 600); ctx.fillText(name, bx + 10, yb + 20);
-      ctx.fillStyle = C.dim; ctx.font = font(narrow ? 8.5 : 10); ctx.fillText(sub, bx + 10, yb + 42);
-      if (i < 3) {
-        ctx.strokeStyle = C.ink; ctx.beginPath(); ctx.moveTo(bx + bw + 3, yb + H / 2); ctx.lineTo(bx + bw + gapX - 4, yb + H / 2); ctx.stroke();
-        ctx.fillStyle = C.ink; ctx.beginPath(); ctx.moveTo(bx + bw + gapX - 3, yb + H / 2); ctx.lineTo(bx + bw + gapX - 9, yb + H / 2 - 4); ctx.lineTo(bx + bw + gapX - 9, yb + H / 2 + 4); ctx.closePath(); ctx.fill();
-      }
+      const [bx, by] = box(i); ctx.globalAlpha = a * Math.max(0.35, clamp((k - i * 0.1) * 4));
+      ctx.fillStyle = i === 2 ? "#fbfaff" : "#fff"; ctx.fillRect(bx, by, bw, H);
+      ctx.strokeStyle = i === 2 ? C.blue : C.ink; ctx.lineWidth = LW(1.2); ctx.strokeRect(bx, by, bw, H);
+      ctx.fillStyle = C.ink; ctx.font = font(10, 600); ctx.fillText(name, bx + 9, by + 17);
+      ctx.fillStyle = C.dim; ctx.font = font(9.5); ctx.fillText(sub, bx + 9, by + 35);
     });
-    // the dynamics are rolled forward 20 times
-    const dx = X0 + 2 * (bw + gapX);
-    ctx.strokeStyle = C.blue; ctx.lineWidth = LW(1); ctx.beginPath(); ctx.arc(dx + bw - 18, yb - 2, 12, Math.PI, 0); ctx.stroke();
-    ctx.font = font(9.5); ctx.fillStyle = C.blue; ctx.textAlign = "right"; ctx.fillText("× 20", dx + bw - 34, yb - 8);
-    // a probe on the state, a blind spot in the dynamics, and the fix
-    const sx = X0 + bw + gapX, p1 = clamp((k - 0.35) * 4), p2 = clamp((k - 0.6) * 4), p3 = clamp((k - 0.8) * 5);
-    ctx.textAlign = "left";
-    if (p1 > 0) {
-      ctx.globalAlpha = a * p1; ctx.strokeStyle = C.gain; ctx.setLineDash([3, 3]);
-      ctx.beginPath(); ctx.moveTo(sx + bw / 2, yb + H); ctx.lineTo(sx + bw / 2, yb + H + 34); ctx.stroke(); ctx.setLineDash([]);
-      ctx.font = font(10, 600); ctx.fillStyle = C.gain; ctx.fillText("PROBE", sx + 4, yb + H + 48);
-      ctx.font = font(10); ctx.fillStyle = C.ink; ctx.fillText("drawdown cells track", sx + 4, yb + H + 64); ctx.fillText("financing stress", sx + 4, yb + H + 79);
-    }
-    if (p2 > 0) {
-      ctx.globalAlpha = a * p2; ctx.strokeStyle = C.loss; ctx.setLineDash([3, 3]);
-      ctx.beginPath(); ctx.moveTo(dx + bw / 2, yb + H); ctx.lineTo(dx + bw / 2, yb + H + 34); ctx.stroke(); ctx.setLineDash([]);
-      ctx.font = font(10, 600); ctx.fillStyle = C.loss; ctx.fillText("BLIND SPOT", dx + 4, yb + H + 48);
-      ctx.font = font(10); ctx.fillStyle = C.ink; ctx.fillText("smooth steps only:", dx + 4, yb + H + 64); ctx.fillText("overnight gaps missed", dx + 4, yb + H + 79);
-    }
-    if (p3 > 0) {
-      ctx.globalAlpha = a * p3; ctx.font = font(10, 600); ctx.fillStyle = C.blue;
-      ctx.fillText("FIX → add a jump term", dx + 4, yb + H + 100);
-    }
+    ctx.globalAlpha = a; ctx.strokeStyle = C.ink; ctx.fillStyle = C.ink; ctx.lineWidth = LW(1);
+    const [e0x, e0y] = box(0), [s0x, s0y] = box(1), [d0x, d0y] = box(2), [r0x, r0y] = box(3);
+    arrow(e0x + bw + 2, e0y + H / 2, s0x - 3, s0y + H / 2);
+    arrow(s0x + bw / 2, s0y + H + 2, d0x + bw / 2, d0y - 3);
+    arrow(d0x - 2, d0y + H / 2, r0x + bw + 3, r0y + H / 2);
+    const ny = r0y + H + 30, notes = [["PROBE", "drawdown cells track financing stress", C.gain, 0.35], ["BLIND SPOT", "smooth steps only: overnight gaps missed", C.loss, 0.6], ["FIX", "add a jump term to the dynamics", C.blue, 0.8]];
+    notes.forEach(([lab, txt, col, at], i) => {
+      const o = clamp((k - at) * 4); if (o <= 0) return;
+      ctx.globalAlpha = a * o; ctx.font = font(9.5, 600); ctx.fillStyle = col; ctx.fillText(lab, X0, ny + i * 34);
+      ctx.font = font(10); ctx.fillStyle = C.ink; ctx.fillText(txt, X0, ny + i * 34 + 15);
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  // look inside: a paper-style figure of the model and the interpretability loop (schematic, not a trained model)
+  function layerInside(ctx, G, a, k) {
+    if (G.narrow) return layerInsideNarrow(ctx, G, a, k);
+    const { X0, XH, SY0 } = G, cy = SY0 + 112, span = XH - X0;
+    const serif = (px, it = true) => `${it ? "italic " : ""}${(px / Math.pow(S, 0.62)).toFixed(2)}px 'Computer Modern Serif', 'Latin Modern Roman', 'Times New Roman', serif`;
+    // math label with an optional subscript
+    const math = (base, sub, x, y, px = 14, col = C.ink, align = "center") => {
+      ctx.font = serif(px); const bw = ctx.measureText(base).width; ctx.font = serif(px * 0.68); const sw = sub ? ctx.measureText(sub).width : 0;
+      let x0 = align === "center" ? x - (bw + sw) / 2 : x;
+      ctx.fillStyle = col; ctx.textAlign = "left"; ctx.font = serif(px); ctx.fillText(base, x0, y);
+      if (sub) { ctx.font = serif(px * 0.68); ctx.fillText(sub, x0 + bw + 1, y + px * 0.32); }
+    };
+    const tag = (txt, x, y) => { ctx.font = font(8.5, 600); ctx.fillStyle = C.dim; ctx.textAlign = "center"; ctx.fillText(txt, x, y); };
+    const arrow = (x1, y1, x2, y2, col = C.ink) => {
+      ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = LW(1); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      const an = Math.atan2(y2 - y1, x2 - x1); ctx.beginPath(); ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - 6 * Math.cos(an - 0.45), y2 - 6 * Math.sin(an - 0.45)); ctx.lineTo(x2 - 6 * Math.cos(an + 0.45), y2 - 6 * Math.sin(an + 0.45)); ctx.closePath(); ctx.fill();
+    };
+    const badge = (ch, x, y, col) => { ctx.fillStyle = "#fff"; ctx.strokeStyle = col; ctx.lineWidth = LW(1); ctx.beginPath(); ctx.arc(x, y, 7, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.font = serif(10); ctx.fillStyle = col; ctx.textAlign = "center"; ctx.fillText(ch, x, y + 0.5); };
+    const on = at => clamp((k - at) * 4);
+    ctx.textBaseline = "middle";
+
+    // horizontal plan: input | encoder | z_t | dynamics | imagined z | decoder | futures
+    const u = span / 100, xIn = X0, wIn = 12 * u, xE = xIn + wIn + 4 * u, wE = 9 * u, xZ = xE + wE + 4 * u, wZ = 2.6 * u,
+      xD = xZ + wZ + 5 * u, wD = 17 * u, xR = xD + wD + 5 * u, wR = 7 * u, xDe = xR + wR + 4 * u, wDe = 9 * u, xOut = xDe + wDe + 4 * u, wOut = X0 + span - xOut;
+    ctx.globalAlpha = a;
+    ctx.font = font(9, 600); ctx.fillStyle = C.dim; ctx.textAlign = "left"; ctx.fillText("FIG. 2 · ACTION-CONDITIONED LATENT WORLD MODEL", X0, SY0 + 8);
+    ctx.strokeStyle = C.axis; ctx.lineWidth = LW(1); ctx.beginPath(); ctx.moveTo(X0, SY0 + 20); ctx.lineTo(XH, SY0 + 20); ctx.stroke();
+
+    // input window: the last 60 daily returns as bars
+    ctx.globalAlpha = a * Math.max(0.35, on(0));
+    tag("INPUT", xIn + wIn / 2, cy - 52);
+    const n = HIST.length;
+    for (let i = 0; i < 60; i++) { const r = HIST[n - 60 + i] / HIST[n - 61 + i] - 1, hgt = Math.min(34, Math.abs(r) * 900), bx = xIn + i / 60 * wIn;
+      ctx.fillStyle = r >= 0 ? "rgba(31,122,77,.75)" : "rgba(179,38,30,.7)"; ctx.fillRect(bx, r >= 0 ? cy - hgt : cy, Math.max(1, wIn / 60 - 0.4), hgt); }
+    ctx.strokeStyle = C.axis; ctx.beginPath(); ctx.moveTo(xIn, cy); ctx.lineTo(xIn + wIn, cy); ctx.stroke();
+    math("x", "t−59:t", xIn + wIn / 2, cy + 50);
+
+    // encoder: a narrowing trapezoid
+    ctx.globalAlpha = a * Math.max(0.35, on(0.05));
+    tag("ENCODER", xE + wE / 2, cy - 52);
+    ctx.fillStyle = "#fff"; ctx.strokeStyle = C.ink; ctx.lineWidth = LW(1.2);
+    ctx.beginPath(); ctx.moveTo(xE, cy - 36); ctx.lineTo(xE + wE, cy - 16); ctx.lineTo(xE + wE, cy + 16); ctx.lineTo(xE, cy + 36); ctx.closePath(); ctx.fill(); ctx.stroke();
+    math("E", "φ", xE + wE / 2, cy + 1, 15);
+    arrow(xIn + wIn + 2, cy, xE - 3, cy);
+
+    // latent state z_t: a column of cells, grouped in four
+    ctx.globalAlpha = a * Math.max(0.35, on(0.1));
+    tag("STATE", xZ + wZ / 2, cy - 52);
+    const ch = 72 / 16;
+    for (let i = 0; i < 16; i++) { const v = LAT[i * 2]; ctx.fillStyle = v >= 0 ? hexA("#1f7a4d", 0.2 + 0.7 * v) : hexA("#b3261e", 0.2 + 0.7 * -v); ctx.fillRect(xZ, cy - 36 + i * ch, wZ, ch - 0.6); }
+    ctx.strokeStyle = C.ink; ctx.lineWidth = LW(1); ctx.strokeRect(xZ, cy - 36, wZ, 72);
+    for (let g = 1; g < 4; g++) { ctx.beginPath(); ctx.moveTo(xZ - 3, cy - 36 + g * 18); ctx.lineTo(xZ + wZ + 3, cy - 36 + g * 18); ctx.stroke(); }
+    math("z", "t", xZ + wZ / 2, cy + 50); ctx.font = serif(10, false); ctx.fillStyle = C.dim; ctx.textAlign = "center"; ctx.fillText("∈ ℝ³²", xZ + wZ / 2, cy + 66);
+    arrow(xE + wE + 2, cy, xZ - 3, cy);
+
+    // dynamics f_θ(z_t, a_t), rolled forward 20 times, with the action entering from below
+    ctx.globalAlpha = a * Math.max(0.35, on(0.15));
+    tag("DYNAMICS", xD + wD / 2, cy - 52);
+    ctx.fillStyle = "#fbfaff"; ctx.strokeStyle = C.blue; ctx.lineWidth = LW(1.3);
+    ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(xD, cy - 26, wD, 52, 8); else ctx.rect(xD, cy - 26, wD, 52); ctx.fill(); ctx.stroke();
+    math("f", "θ", xD + wD / 2 - 18, cy + 1, 15, C.blue); ctx.font = serif(13); ctx.fillStyle = C.blue; ctx.textAlign = "left"; ctx.fillText("(z, a)", xD + wD / 2 - 6, cy + 1);
+    ctx.strokeStyle = C.blue; ctx.lineWidth = LW(1); ctx.beginPath(); ctx.arc(xD + wD / 2, cy - 26, 12, Math.PI, 0); ctx.stroke();
+    ctx.fillStyle = C.blue; ctx.beginPath(); ctx.moveTo(xD + wD / 2 + 12, cy - 25); ctx.lineTo(xD + wD / 2 + 8, cy - 31); ctx.lineTo(xD + wD / 2 + 16, cy - 31); ctx.closePath(); ctx.fill();
+    ctx.font = serif(10, false); ctx.textAlign = "center"; ctx.fillText("× 20 steps", xD + wD / 2, cy - 44);
+    arrow(xZ + wZ + 2, cy, xD - 3, cy);
+    arrow(xD + wD / 2, cy + 58, xD + wD / 2, cy + 29, C.blue);
+    math("a", "t", xD + wD / 2, cy + 68, 14, C.blue);
+    ctx.font = font(8.5); ctx.fillStyle = C.dim; ctx.textAlign = "center"; ctx.fillText("buy $100k · stop −15 %", xD + wD / 2, cy + 84);
+
+    // imagined latents: a stack of future states
+    ctx.globalAlpha = a * Math.max(0.35, on(0.2));
+    tag("IMAGINED", xR + wR / 2, cy - 52);
+    for (let s2 = 3; s2 >= 0; s2--) { const ox = xR + s2 * (wR - wZ) / 3, oy = cy - 36 + s2 * 3; ctx.fillStyle = "#fff"; ctx.fillRect(ox, oy, wZ, 66); ctx.strokeStyle = s2 === 0 ? C.ink : C.axis; ctx.strokeRect(ox, oy, wZ, 66);
+      for (let i = 0; i < 11; i++) { ctx.fillStyle = C.blueA(0.06 + 0.05 * ((i * 7 + s2 * 3) % 5)); ctx.fillRect(ox + 1, oy + 1 + i * 6, wZ - 2, 5); } }
+    math("ẑ", "t+1:t+20", xR + wR / 2, cy + 50);
+    arrow(xD + wD + 2, cy, xR - 3, cy);
+
+    // decoder: a widening trapezoid
+    ctx.globalAlpha = a * Math.max(0.35, on(0.25));
+    tag("DECODER", xDe + wDe / 2, cy - 52);
+    ctx.fillStyle = "#fff"; ctx.strokeStyle = C.ink; ctx.lineWidth = LW(1.2);
+    ctx.beginPath(); ctx.moveTo(xDe, cy - 16); ctx.lineTo(xDe + wDe, cy - 36); ctx.lineTo(xDe + wDe, cy + 36); ctx.lineTo(xDe, cy + 16); ctx.closePath(); ctx.fill(); ctx.stroke();
+    math("D", "ψ", xDe + wDe / 2, cy + 1, 15);
+    arrow(xR + wR + 2, cy, xDe - 3, cy);
+
+    // futures: a small fan of imagined price paths
+    ctx.globalAlpha = a * Math.max(0.35, on(0.3));
+    tag("FUTURES", xOut + wOut / 2, cy - 52);
+    W.forEach((wd, i) => { const m = IDX[i].med, lo2 = 0.75, hi2 = 1.2; ctx.beginPath();
+      m.forEach((v, d) => { const px = xOut + d / DAYS * wOut, py = cy + 30 - (v / TODAY - lo2) / (hi2 - lo2) * 60; d ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
+      ctx.strokeStyle = hexA(F[wd.fam].color, 0.75); ctx.lineWidth = LW(1); ctx.stroke(); });
+    math("x̂", "t+1:t+20", xOut + wOut / 2, cy + 50);
+    arrow(xDe + wDe + 2, cy, xOut - 3, cy);
+
+    // training signal: predict the next latent, not raw prices
+    ctx.globalAlpha = a * on(0.3);
+    ctx.strokeStyle = C.dim; ctx.setLineDash([2, 3]); ctx.lineWidth = LW(1);
+    ctx.beginPath(); ctx.moveTo(xR + wR / 2, cy + 64); ctx.lineTo(xR + wR / 2, cy + 104); ctx.lineTo(xZ + wZ / 2, cy + 104); ctx.lineTo(xZ + wZ / 2, cy + 76); ctx.stroke(); ctx.setLineDash([]);
+    ctx.font = serif(10.5); ctx.fillStyle = C.dim; ctx.textAlign = "center";
+    ctx.fillText("trained in latent space:  L = ‖ẑₜ₊₁ − Eᵩ(xₜ₊₁)‖²", (xZ + xR + wR) / 2, cy + 116);
+
+    // interpretability loop: (a) probe, (b) failure mode, (c) fix
+    const ly = cy + 146, colW = span / 3;
+    const notes = [
+      ["a", C.gain, xZ + wZ / 2, cy - 36, "Linear probe on z", "t", ": the drawdown subspace tracks financing stress.", 0.4],
+      ["b", C.loss, xD + wD - 10, cy + 26, "Failure mode: f", "θ", " moves in small steps, so overnight gaps lie outside its support.", 0.6],
+      ["c", C.blue, xD + 10, cy + 26, "Fix: add a jump term J(z", "t", "), then re-test on held-out shocks.", 0.8],
+    ];
+    notes.forEach(([ch2, col, ax, ay, pre, sub, post, at], i) => {
+      const o = on(at); if (o <= 0) return;
+      ctx.globalAlpha = a * o;
+      badge(ch2, ax, ay + (i === 0 ? -10 : 10), col);
+      const tx = X0 + i * colW, ty = ly;
+      badge(ch2, tx + 7, ty, col);
+      ctx.textAlign = "left"; ctx.font = serif(11.5, false); ctx.fillStyle = C.ink;
+      // wrap the note into the column, keeping the subscript inline
+      const full = pre + "​" + sub + "​" + post, maxW = colW - 30;
+      let line = "", yy = ty, x0 = tx + 20, parts = full.split(" ");
+      const flush = (s, last) => { const segs = s.split("​"); let cx = x0; segs.forEach((sg, j) => { const isSub = j === 1 && segs.length === 3; ctx.font = isSub ? serif(8) : serif(11.5, false); ctx.fillText(sg, cx, yy + (isSub ? 3 : 0)); cx += ctx.measureText(sg).width; }); yy += 15; };
+      parts.forEach(wd => { const test = line ? line + " " + wd : wd; ctx.font = serif(11.5, false); if (ctx.measureText(test.replace(/​/g, "")).width > maxW && line) { flush(line); line = wd; } else line = test; });
+      if (line) flush(line);
+    });
+    ctx.globalAlpha = a * on(0.85);
+    ctx.font = serif(11); ctx.fillStyle = C.dim; ctx.textAlign = "left";
+    ctx.fillText("Figure 2. Schematic of an action-conditioned latent world model and the interpretability loop used to improve it. Illustrative, not a trained model.", X0, ly + 62);
     ctx.globalAlpha = 1;
   }
 
