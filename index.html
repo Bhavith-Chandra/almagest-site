@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Almagest: Imagined Markets. Real Consequences.</title>
-<meta name="description" content="Almagest builds counterfactual world models of financial markets: simulators that predict what happens when you act.">
+<meta name="description" content="Almagest builds interpretable world models, starting with financial markets: simulators that show what happens when you act, and why.">
 <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,13 +31,13 @@
 
   <div class="meta-grid">
     <div><p class="meta-label">Contact</p><a class="pill" id="contact-link" href="#">contact</a></div>
-    <div><p class="meta-label">Focus</p><span class="pill">what-if simulation of markets</span></div>
-    <div><p class="meta-label">Approach</p><span class="pill">action-conditioned world models</span></div>
+    <div><p class="meta-label">Focus</p><span class="pill">World Models, Interpretability</span></div>
+    <div><p class="meta-label">Approach</p><span class="pill">Future Latent Rollout, Interactive Worlds</span></div>
   </div>
 
   <section class="abstract">
     <h2>Almagest</h2>
-    <p>We build world models of financial markets that answer one question: <em>what happens if I act?</em> A world model is a learned simulator. Given the state of a market and a proposed action, it imagines what follows, so decisions can be rehearsed before they are made.</p>
+    <p>We build world models of financial markets that answer one question: <em>what happens if I act?</em> A world model is a learned simulator. Given the state of a market and a proposed action, it imagines what follows, so decisions can be rehearsed before they are made. And because a decision is only as good as its reasons, every imagined future can be opened up and explained.</p>
   </section>
 
   <section class="body">
@@ -46,6 +46,61 @@
     <p>An action-conditioned world model takes the market&rsquo;s state and a proposed decision, and imagines the path that follows. A desk can ask it the counterfactual: <em>what would this trade have cost in a different market?</em> An agent can learn inside it, rehearsing thousands of scenarios before it acts once.</p>
     <p>The most useful thing a simulator can tell you is where it stops being right. We build models that know the edge of their own experience, and that fall back to simple, proven laws when the market moves beyond it.</p>
     <p>Almagest will develop applications where the cost of a wrong decision is real: execution, pre-trade cost estimation, stress testing and risk.</p>
+  </section>
+
+  <section class="playground" id="playground">
+    <h3>Try it: a world you can act in</h3>
+    <p class="pg-intro">Below is a toy market. You have a large buy order to fill. The world model imagines four hundred futures of the same market, once with your order and once without it. Everything that differs between the two is the consequence of your action. That is a counterfactual.</p>
+
+    <div class="pg-step"><span class="use-kind">01 &middot; Act</span>
+      <div class="pg-controls">
+        <label>Order size <span id="pg-size-val" class="pg-val"></span><input id="pg-size" type="range" min="0.5" max="15" step="0.5" value="4"></label>
+        <label>Pace <span id="pg-slices-val" class="pg-val"></span><input id="pg-slices" type="range" min="1" max="20" step="1" value="4"></label>
+        <div class="pg-regimes"><span class="pg-lab">Market</span>
+          <button class="pill pg-regime active" data-regime="calm">calm</button>
+          <button class="pill pg-regime" data-regime="choppy">choppy</button>
+          <button class="pill pg-regime" data-regime="stressed">stressed</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="pg-step"><span class="use-kind">02 &middot; Imagine</span>
+      <div>
+        <div id="pg-paths" class="pg-chart" role="img" aria-label="Imagined price paths with and without the order"></div>
+        <p class="caption">Faint lines: imagined futures with your order. Black: the typical one. Dashed: the same world without your order. The shaded gap is what your order did to the price. Ticks on the axis show when each slice trades.</p>
+        <p id="pg-badge" class="pg-badge"></p>
+      </div>
+    </div>
+
+    <div class="pg-step"><span class="use-kind">03 &middot; Look inside</span>
+      <div class="pg-pair">
+        <div>
+          <p class="pg-lab">What it costs you, across all futures</p>
+          <div id="pg-hist" class="pg-chart"></div>
+          <p class="pg-numbers">Average <b id="pg-mean"></b> bps &middot; bad day (worst 5&thinsp;%) <b id="pg-tail"></b> bps</p>
+        </div>
+        <div>
+          <p class="pg-lab">Why: what drives the bad-day cost</p>
+          <div id="pg-explain" class="pg-chart"></div>
+          <p class="caption" id="pg-explain-sum"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="pg-step"><span class="use-kind">04 &middot; Decide</span>
+      <div>
+        <p class="pg-decide">Search the imagined futures for the pace that keeps your bad day smallest. <button class="btn" id="pg-safer">Find a safer plan <span class="arrow">&#8599;</span></button></p>
+        <p id="pg-advice" class="pg-advice"></p>
+      </div>
+    </div>
+    <p class="caption pg-note">An illustrative toy market built for this page. It is not a trading tool and not our research model.</p>
+  </section>
+
+  <section class="body" id="interpretability">
+    <h3>Why interpretability, and why finance first</h3>
+    <p>A model that predicts well but cannot say why is a liability wherever money is at stake. We build world models whose imagined futures can be opened up: which part of the state drove a prediction, which action caused which consequence, and where the model has stopped being on familiar ground.</p>
+    <p>We are starting with finance because it is where world models and interpretability meet most naturally. Every action has a measurable consequence. Every decision is recorded. The cost of a wrong or unexplained decision is immediate and real, and the people who carry that cost, and those who regulate them, need to know the reason.</p>
+    <p>We think this is how one should trade: know what your action will do to the market before you take it, know why the model believes it, and know when it does not know.</p>
   </section>
 
   <section class="uses">
@@ -71,12 +126,13 @@
 </div>
 <script>
   // Set the contact address once the domain is live.
-  const CONTACT = "";
+  const CONTACT = "bhavith@almagest.nyc";
   for (const id of ["contact-link", "contact-link-2"]) {
     const a = document.getElementById(id);
     if (CONTACT) { a.href = "mailto:" + CONTACT; if (id === "contact-link") a.textContent = CONTACT; }
     else { a.removeAttribute("href"); if (id === "contact-link") a.textContent = "opening soon"; }
   }
 </script>
+<script src="assets/playground.js"></script>
 </body>
 </html>
