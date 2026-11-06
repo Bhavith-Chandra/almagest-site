@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Almagest: Case Study, the Day the AI Trade Broke</title>
+<meta name="description" content="A beginner-friendly walkthrough: test a simple trading rule in the most plausible worlds that could follow the AI selloff of 5 November 2026.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Tinos:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts.css">
+<link rel="stylesheet" href="assets/style.css?v=11">
+</head>
+<body>
+<div class="page">
+<main class="container" id="case">
+
+  <header class="brand brand-small"><a class="wordmark" href="./">Almagest</a></header>
+
+  <h1>The Day the AI Trade Broke</h1>
+  <p class="kicker">Case study &middot; one simple rule, eighteen possible worlds</p>
+
+  <div class="meta-grid">
+    <div><p class="meta-label">Market date</p><span class="pill">Thursday, 5 November 2026</span></div>
+    <div><p class="meta-label">Market</p><span class="pill">US stocks, AI and chip makers</span></div>
+    <div><p class="meta-label">You</p><span class="pill">a $100,000 account and one rule</span></div>
+  </div>
+
+  <section class="abstract">
+    <h2>The idea in one paragraph</h2>
+    <p>Nobody knows what the market will do next. But from today&rsquo;s situation, only a handful of futures are realistic. A world model generates those futures, plays your trading rule in each one, and shows you where the rule makes money, where it loses, and <em>why</em>. Once you can see where a rule breaks, you can fix it before it costs you.</p>
+  </section>
+
+  <section class="body">
+    <h3>1. What happened today</h3>
+    <p>Two days after the US midterm elections, the stocks that had led the market for three years, the companies building artificial intelligence, fell hard.</p>
+    <ul class="facts">
+      <li>The <b>S&amp;P 500</b> (the 500 largest US companies) fell 4.4&thinsp;%, its worst day since April 2025.</li>
+      <li><b>Chip makers</b>, the companies that make the processors AI runs on, fell the most: AMD &minus;17.3&thinsp;%, Nvidia &minus;9.3&thinsp;%. The Philadelphia Semiconductor Index, which tracks the largest US-listed chip companies, closed at 9,011, down 12.2&thinsp;% on the day and 38&thinsp;% below its June peak.</li>
+      <li><b>Why:</b> building AI data centres takes huge loans, and borrowing is expensive. Investors worried that fewer data centres means fewer chips sold. The election results also raised the chance that governments pause new data centres, because they push up electricity bills.</li>
+      <li><b>In the background:</b> the interest rate on 10-year US government debt has come down to 4.84&thinsp;%, from above 5.30&thinsp;% last month. Oil (Brent) is at $98 a barrel during the Iran war. The Bank of England raised interest rates today.</li>
+    </ul>
+    <p class="caption">Sources: Associated Press market report of 5 November 2026, via <a href="https://www.nbcphiladelphia.com/news/national-international/ai-stocks-wall-street-reeling-sp-500-tumbles/4492492/">NBC Philadelphia</a>; index closes from Yahoo Finance (^SOX, ^GSPC), cross-checked against FRED for the S&amp;P 500.</p>
+  </section>
+
+  <section class="body">
+    <h3>2. Your rule</h3>
+    <p>Your rule is called <em>buy the dip</em>: when chip stocks drop sharply in one day, buy a fund that tracks the chip index and hold it for four weeks, betting the fall was an overreaction. Today qualifies. Set the rule up the way you would:</p>
+    <p class="sentence">
+      I put
+      <span class="knob"><input id="lev" type="range" min="0.25" max="1" step="0.25" value="1" aria-label="Amount invested"><b id="lev-val"></b></span>
+      into chip stocks, sell automatically if I am down
+      <span class="knob"><input id="stop" type="range" min="5" max="25" step="5" value="15" aria-label="Stop-loss"><b id="stop-val"></b></span>,
+      and insure
+      <span class="knob"><input id="hedge" type="range" min="0" max="100" step="25" value="0" aria-label="Insurance"><b id="hedge-val"></b></span>
+      against the whole market falling.
+    </p>
+    <p class="caption">&ldquo;Sell automatically&rdquo; is a stop-loss. &ldquo;Insure&rdquo; means also betting against the overall market (the Nasdaq index), so a market-wide fall is partly offset.</p>
+  </section>
+
+  <section class="body">
+    <h3>3. Five worlds that could follow</h3>
+    <p>The black line is what really happened to chip stocks since April. From today&rsquo;s close, the world model keeps only the futures that today&rsquo;s facts make realistic, and weighs each by how likely it is. Hover over a line to read that world; click it for the full review.</p>
+  </section>
+
+  <figure class="fig market-fig">
+    <div class="fig-head">
+      <span class="reading-k">PHLX Semiconductor Index (^SOX), daily close</span>
+      <span class="reading-k fig-legend"><i class="lg-real"></i>real <i class="lg-imag"></i>imagined &middot; line weight = likelihood</span>
+    </div>
+    <div class="canvas-wrap"><canvas id="mkt" height="440" aria-label="Real chip index history branching into five imagined futures"></canvas></div>
+  </figure>
+
+  <section class="body">
+    <p class="summary" id="summary"></p>
+    <p class="caption" id="discarded"></p>
+  </section>
+
+  <section class="review" id="detail">
+    <div class="review-head">
+      <p class="reading-k" id="d-k"></p>
+      <h3 class="d-title" id="d-name"></h3>
+      <p class="review-lead" id="d-lead"></p>
+    </div>
+    <div class="review-grid">
+      <div class="review-text" id="d-text"></div>
+      <aside class="review-side">
+        <p class="reading-k">Your rule in this world</p>
+        <div class="side-stats" id="d-stats"></div>
+        <figure class="fig">
+          <p class="reading-k">Your $100,000, next four weeks</p>
+          <div class="canvas-wrap"><canvas id="d-fan" height="200"></canvas></div>
+        </figure>
+        <figure class="fig">
+          <p class="reading-k">Where the money went (average)</p>
+          <div id="d-water"></div>
+        </figure>
+      </aside>
+    </div>
+    <div class="world-tabs" id="world-tabs"></div>
+  </section>
+
+  <section class="body">
+    <h3>4. Fix the rule</h3>
+    <p>Now use the failures. The model tries a hundred versions of your rule (how much to put in, when to sell, how much to insure) and keeps the one that earns the most while keeping your worst 1-in-10 outcome under a $15,000 loss.</p>
+    <div class="act-row">
+      <button class="btn" id="find-sturdier">Find a sturdier rule <span class="arrow">&#8599;</span></button>
+      <span class="note" id="sturdy-status"></span>
+    </div>
+    <div id="sturdy-out"></div>
+  </section>
+
+  <section class="body">
+    <p class="belief">The point is not to guess which world will come. It is to hold a rule you understand in all of them.</p>
+    <p class="caption">How to read this page: the facts in section 1 are reported news. The worlds, their chances and every dollar figure come from a simple illustrative model built by hand for this page. They are not forecasts and not investment advice. In Almagest&rsquo;s system the worlds are generated by a world model from the market&rsquo;s state.</p>
+    <p class="links"><a class="btn" href="./">Back to Almagest <span class="arrow">&#8599;</span></a></p>
+  </section>
+
+</main>
+<footer class="footer">
+  <a class="footer-brand" href="./">Almagest</a>
+  <div class="footer-copy">&copy; 2026 Almagest</div>
+</footer>
+</div>
+<script src="assets/market.js?v=11"></script>
+<script src="assets/worlds.js?v=11"></script>
+<script src="assets/console.js?v=11"></script>
+<script src="assets/case.js?v=11"></script>
+</body>
+</html>

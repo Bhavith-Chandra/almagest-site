@@ -5,26 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Almagest: Imagined Markets. Real Consequences.</title>
 <meta name="description" content="Almagest builds interpretable world models, starting with financial markets: simulators that show what happens when you act, and why.">
-<link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Tinos:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/aaaakshat/cm-web-fonts@latest/fonts.css">
-<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/style.css?v=8">
 </head>
 <body>
 <div class="page">
 <main class="container">
 
   <header class="brand">
-    <svg class="mark" viewBox="0 0 120 120" aria-hidden="true">
-      <circle cx="60" cy="60" r="54" fill="none" stroke="#000" stroke-width="8"/>
-      <ellipse cx="60" cy="60" rx="54" ry="20" fill="none" stroke="#000" stroke-width="6" transform="rotate(-23 60 60)"/>
-      <circle cx="60" cy="60" r="9" fill="#000"/>
-      <circle cx="97" cy="44" r="13" fill="none" stroke="#000" stroke-width="5"/>
-      <circle cx="108" cy="40" r="6" fill="#000"/>
-    </svg>
-    <div class="wordmark">Almagest<br>Counterfactual<br>World Models</div>
+    <a class="wordmark" href="./">Almagest</a>
   </header>
 
   <h1>Imagined Markets. Real Consequences.</h1>
@@ -48,52 +41,13 @@
     <p>Almagest will develop applications where the cost of a wrong decision is real: execution, pre-trade cost estimation, stress testing and risk.</p>
   </section>
 
-  <section class="playground" id="playground">
-    <h3>Try it: a world you can act in</h3>
-    <p class="pg-intro">Below is a toy market. You have a large buy order to fill. The world model imagines four hundred futures of the same market, once with your order and once without it. Everything that differs between the two is the consequence of your action. That is a counterfactual.</p>
-
-    <div class="pg-step"><span class="use-kind">01 &middot; Act</span>
-      <div class="pg-controls">
-        <label>Order size <span id="pg-size-val" class="pg-val"></span><input id="pg-size" type="range" min="0.5" max="15" step="0.5" value="4"></label>
-        <label>Pace <span id="pg-slices-val" class="pg-val"></span><input id="pg-slices" type="range" min="1" max="20" step="1" value="4"></label>
-        <div class="pg-regimes"><span class="pg-lab">Market</span>
-          <button class="pill pg-regime active" data-regime="calm">calm</button>
-          <button class="pill pg-regime" data-regime="choppy">choppy</button>
-          <button class="pill pg-regime" data-regime="stressed">stressed</button>
-        </div>
-      </div>
+  <section class="uses">
+    <div class="use use-feature">
+      <span class="use-kind">Case study</span>
+      <div><p class="use-title"><a href="case.html">The day the AI trade broke</a></p>
+      <p class="use-desc">5 November 2026, a real market day. Take a simple &ldquo;buy the dip&rdquo; rule, run it through the eighteen most plausible worlds that could follow, see where it makes money, where it loses, and why, and then fix it.</p>
+      <p><a class="btn" href="case.html">Open the case study <span class="arrow">&#8599;</span></a></p></div>
     </div>
-
-    <div class="pg-step"><span class="use-kind">02 &middot; Imagine</span>
-      <div>
-        <div id="pg-paths" class="pg-chart" role="img" aria-label="Imagined price paths with and without the order"></div>
-        <p class="caption">Faint lines: imagined futures with your order. Black: the typical one. Dashed: the same world without your order. The shaded gap is what your order did to the price. Ticks on the axis show when each slice trades.</p>
-        <p id="pg-badge" class="pg-badge"></p>
-      </div>
-    </div>
-
-    <div class="pg-step"><span class="use-kind">03 &middot; Look inside</span>
-      <div class="pg-pair">
-        <div>
-          <p class="pg-lab">What it costs you, across all futures</p>
-          <div id="pg-hist" class="pg-chart"></div>
-          <p class="pg-numbers">Average <b id="pg-mean"></b> bps &middot; bad day (worst 5&thinsp;%) <b id="pg-tail"></b> bps</p>
-        </div>
-        <div>
-          <p class="pg-lab">Why: what drives the bad-day cost</p>
-          <div id="pg-explain" class="pg-chart"></div>
-          <p class="caption" id="pg-explain-sum"></p>
-        </div>
-      </div>
-    </div>
-
-    <div class="pg-step"><span class="use-kind">04 &middot; Decide</span>
-      <div>
-        <p class="pg-decide">Search the imagined futures for the pace that keeps your bad day smallest. <button class="btn" id="pg-safer">Find a safer plan <span class="arrow">&#8599;</span></button></p>
-        <p id="pg-advice" class="pg-advice"></p>
-      </div>
-    </div>
-    <p class="caption pg-note">An illustrative toy market built for this page. It is not a trading tool and not our research model.</p>
   </section>
 
   <section class="body" id="interpretability">
@@ -115,17 +69,17 @@
     <p class="belief">We share one belief: understanding a market starts with knowing what your own actions do to it.</p>
     <p class="links">
       <a class="btn" id="contact-link-2" href="#">Contact <span class="arrow">&#8599;</span></a>
+      <a class="btn" href="case.html">Case study <span class="arrow">&#8599;</span></a>
     </p>
   </section>
 
 </main>
 <footer class="footer">
-  <div class="footer-brand"><img src="assets/mark.svg" alt="" width="22" height="22"> Almagest</div>
+  <a class="footer-brand" href="./">Almagest</a>
   <div class="footer-copy">&copy; 2026 Almagest</div>
 </footer>
 </div>
 <script>
-  // Set the contact address once the domain is live.
   const CONTACT = "bhavith@almagest.nyc";
   for (const id of ["contact-link", "contact-link-2"]) {
     const a = document.getElementById(id);
@@ -133,6 +87,5 @@
     else { a.removeAttribute("href"); if (id === "contact-link") a.textContent = "opening soon"; }
   }
 </script>
-<script src="assets/playground.js"></script>
 </body>
 </html>
