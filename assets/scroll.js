@@ -87,7 +87,7 @@
       { x: (xs + XH) / 2 + 20, y: mid, s: 1 + 0.22 * z },
       { x: (xs + XH) / 2 - 30, y: mid, s: 1 + 0.32 * z },
       { x: xf(8), y: y(m[8]), s: 1 + 0.55 * z },
-      { x: narrow ? (X0 + XH) / 2 : (X0 + XH) / 2 - 34, y: narrow ? SY0 + 150 : SY0 + 128, s: narrow ? 1 : 1.1 },
+      { x: narrow ? w / 2 : (X0 + XH) / 2 - 34, y: narrow ? SY0 + 190 : SY0 + 128, s: narrow ? 1 : 1.1 },
       { x: narrow ? (X0 + XH) / 2 : (X0 + w - 30) / 2, y: mid, s: narrow ? 1 : 0.93 },
     ];
   }
@@ -292,33 +292,111 @@
   }
 
   // look inside: the model's parts, a probe of the state, and a blind spot found by reverse-engineering
-  // phones: the same four parts as a U-shaped 2 × 2 flow, with the findings stacked underneath
+  // phones: the same paper-style figure in two rows (x → E → z → f, then ẑ → D → x̂ back along the bottom)
   function layerInsideNarrow(ctx, G, a, k) {
-    const { X0, XH, SY0 } = G, H = 50, gapX = 22, gapY = 34, bw = (XH - X0 - gapX) / 2, y0 = SY0 + 34;
-    const pos = [[0, 0], [1, 0], [1, 1], [0, 1]], parts = [["ENCODER", "past → z"], ["STATE  z", "32 numbers"], ["DYNAMICS", "f(z, a) × 20"], ["DECODER", "z → prices"]];
-    const box = i => [X0 + pos[i][0] * (bw + gapX), y0 + pos[i][1] * (H + gapY)];
-    const arrow = (x1, y1, x2, y2) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); const an = Math.atan2(y2 - y1, x2 - x1);
-      ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x2 - 6 * Math.cos(an - 0.5), y2 - 6 * Math.sin(an - 0.5)); ctx.lineTo(x2 - 6 * Math.cos(an + 0.5), y2 - 6 * Math.sin(an + 0.5)); ctx.closePath(); ctx.fill(); };
-    ctx.globalAlpha = a; ctx.textBaseline = "middle"; ctx.textAlign = "left";
-    ctx.font = font(9.5, 600); ctx.fillStyle = C.dim; ctx.fillText("INSIDE THE WORLD MODEL (SCHEMATIC)", X0, SY0 + 10);
-    parts.forEach(([name, sub], i) => {
-      const [bx, by] = box(i); ctx.globalAlpha = a * Math.max(0.35, clamp((k - i * 0.1) * 4));
-      ctx.fillStyle = i === 2 ? "#fbfaff" : "#fff"; ctx.fillRect(bx, by, bw, H);
-      ctx.strokeStyle = i === 2 ? C.blue : C.ink; ctx.lineWidth = LW(1.2); ctx.strokeRect(bx, by, bw, H);
-      ctx.fillStyle = C.ink; ctx.font = font(10, 600); ctx.fillText(name, bx + 9, by + 17);
-      ctx.fillStyle = C.dim; ctx.font = font(9.5); ctx.fillText(sub, bx + 9, by + 35);
+    const { SY0, w } = G, L = 18, R = w - 18, span = R - L;
+    const serif = (px, it = true) => `${it ? "italic " : ""}${px}px 'Computer Modern Serif', 'Latin Modern Roman', 'Times New Roman', serif`;
+    const math = (base, sub, x, y, px = 13, col = C.ink) => {
+      ctx.font = serif(px); const bw = ctx.measureText(base).width; ctx.font = serif(px * 0.68); const sw = sub ? ctx.measureText(sub).width : 0;
+      const x0 = x - (bw + sw) / 2; ctx.fillStyle = col; ctx.textAlign = "left"; ctx.font = serif(px); ctx.fillText(base, x0, y);
+      if (sub) { ctx.font = serif(px * 0.68); ctx.fillText(sub, x0 + bw + 1, y + px * 0.32); }
+    };
+    const tag = (txt, x, y) => { ctx.font = "600 7.5px 'IBM Plex Mono', monospace"; ctx.fillStyle = C.dim; ctx.textAlign = "center"; ctx.fillText(txt, x, y); };
+    const arrow = (x1, y1, x2, y2, col = C.ink) => {
+      ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      const an = Math.atan2(y2 - y1, x2 - x1); ctx.beginPath(); ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - 5 * Math.cos(an - 0.45), y2 - 5 * Math.sin(an - 0.45)); ctx.lineTo(x2 - 5 * Math.cos(an + 0.45), y2 - 5 * Math.sin(an + 0.45)); ctx.closePath(); ctx.fill();
+    };
+    const badge = (ch, x, y, col) => { ctx.fillStyle = "#fff"; ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x, y, 6.5, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.font = serif(9.5); ctx.fillStyle = col; ctx.textAlign = "center"; ctx.fillText(ch, x, y + 0.5); };
+    const on = at => clamp((k - at) * 4);
+    ctx.textBaseline = "middle"; ctx.globalAlpha = a;
+
+    ctx.font = "600 8.5px 'IBM Plex Mono', monospace"; ctx.fillStyle = C.dim; ctx.textAlign = "left"; ctx.fillText("FIG. 2 · ACTION-CONDITIONED LATENT WORLD MODEL", L, SY0 + 6);
+    ctx.strokeStyle = C.axis; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(L, SY0 + 16); ctx.lineTo(R, SY0 + 16); ctx.stroke();
+
+    // row 1: input → encoder → state → dynamics
+    const y1 = SY0 + 70, u = span / 100, wIn = 20 * u, wE = 11 * u, wZ = 4.5 * u, wD = 30 * u, g = (span - wIn - wE - wZ - wD) / 3;
+    const xIn = L, xE = xIn + wIn + g, xZ = xE + wE + g, xD = xZ + wZ + g;
+    ctx.globalAlpha = a * Math.max(0.35, on(0));
+    tag("INPUT", xIn + wIn / 2, y1 - 40);
+    const n = HIST.length;
+    for (let i = 0; i < 60; i++) { const r = HIST[n - 60 + i] / HIST[n - 61 + i] - 1, hgt = Math.min(26, Math.abs(r) * 700), bx = xIn + i / 60 * wIn;
+      ctx.fillStyle = r >= 0 ? "rgba(31,122,77,.75)" : "rgba(179,38,30,.7)"; ctx.fillRect(bx, r >= 0 ? y1 - hgt : y1, Math.max(0.8, wIn / 60 - 0.3), hgt); }
+    ctx.strokeStyle = C.axis; ctx.beginPath(); ctx.moveTo(xIn, y1); ctx.lineTo(xIn + wIn, y1); ctx.stroke();
+    math("x", "t−59:t", xIn + wIn / 2, y1 + 38, 12);
+
+    ctx.globalAlpha = a * Math.max(0.35, on(0.05));
+    tag("ENCODER", xE + wE / 2, y1 - 40);
+    ctx.fillStyle = "#fff"; ctx.strokeStyle = C.ink; ctx.lineWidth = 1.1;
+    ctx.beginPath(); ctx.moveTo(xE, y1 - 27); ctx.lineTo(xE + wE, y1 - 12); ctx.lineTo(xE + wE, y1 + 12); ctx.lineTo(xE, y1 + 27); ctx.closePath(); ctx.fill(); ctx.stroke();
+    math("E", "φ", xE + wE / 2, y1 + 1, 13);
+    arrow(xIn + wIn + 2, y1, xE - 2, y1);
+
+    ctx.globalAlpha = a * Math.max(0.35, on(0.1));
+    tag("STATE", xZ + wZ / 2, y1 - 40);
+    for (let i = 0; i < 16; i++) { const v = LAT[i * 2]; ctx.fillStyle = v >= 0 ? hexA("#1f7a4d", 0.2 + 0.7 * v) : hexA("#b3261e", 0.2 + 0.7 * -v); ctx.fillRect(xZ, y1 - 27 + i * 54 / 16, wZ, 54 / 16 - 0.5); }
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 1; ctx.strokeRect(xZ, y1 - 27, wZ, 54);
+    math("z", "t", xZ + wZ / 2, y1 + 38, 12);
+    arrow(xE + wE + 2, y1, xZ - 2, y1);
+
+    ctx.globalAlpha = a * Math.max(0.35, on(0.15));
+    tag("DYNAMICS", xD + wD / 2, y1 - 40);
+    ctx.fillStyle = "#fbfaff"; ctx.strokeStyle = C.blue; ctx.lineWidth = 1.2;
+    ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(xD, y1 - 20, wD, 40, 7); else ctx.rect(xD, y1 - 20, wD, 40); ctx.fill(); ctx.stroke();
+    math("f", "θ", xD + wD / 2 - 14, y1 + 1, 13, C.blue); ctx.font = serif(11.5); ctx.fillStyle = C.blue; ctx.textAlign = "left"; ctx.fillText("(z, a)", xD + wD / 2 - 4, y1 + 1);
+    ctx.strokeStyle = C.blue; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(xD + wD - 14, y1 - 20, 9, Math.PI, 0); ctx.stroke();
+    ctx.font = serif(9, false); ctx.fillStyle = C.blue; ctx.textAlign = "right"; ctx.fillText("× 20", xD + wD - 26, y1 - 27);
+    arrow(xZ + wZ + 2, y1, xD - 2, y1);
+    // the action enters from above
+    math("a", "t", xD + 14, y1 - 50, 12, C.blue); arrow(xD + 14, y1 - 42, xD + 14, y1 - 22, C.blue);
+
+    // row 2, right to left: imagined states → decoder → futures
+    const y2 = y1 + 104, wR = 12 * u, wDe = 11 * u, wOut = 30 * u, g2 = (span - wOut - wDe - wR) / 2;
+    const xR = R - wR, xDe = xR - g2 - wDe, xOut = L;
+    ctx.globalAlpha = a * Math.max(0.35, on(0.2));
+    arrow(xD + wD / 2, y1 + 22, xD + wD / 2, y2 - 34);
+    tag("IMAGINED", xR + wR / 2, y2 - 40 + 2);
+    for (let s2 = 3; s2 >= 0; s2--) { const ox = xR + s2 * (wR - wZ) / 3, oy = y2 - 26 + s2 * 2.5; ctx.fillStyle = "#fff"; ctx.fillRect(ox, oy, wZ, 48); ctx.strokeStyle = s2 === 0 ? C.ink : C.axis; ctx.strokeRect(ox, oy, wZ, 48);
+      for (let i = 0; i < 8; i++) { ctx.fillStyle = C.blueA(0.06 + 0.05 * ((i * 7 + s2 * 3) % 5)); ctx.fillRect(ox + 1, oy + 1 + i * 6, wZ - 2, 5); } }
+    math("ẑ", "t+1:t+20", xR + wR / 2, y2 + 38, 12);
+
+    ctx.globalAlpha = a * Math.max(0.35, on(0.25));
+    tag("DECODER", xDe + wDe / 2, y2 - 38);
+    ctx.fillStyle = "#fff"; ctx.strokeStyle = C.ink; ctx.lineWidth = 1.1;
+    ctx.beginPath(); ctx.moveTo(xDe + wDe, y2 - 12); ctx.lineTo(xDe, y2 - 27); ctx.lineTo(xDe, y2 + 27); ctx.lineTo(xDe + wDe, y2 + 12); ctx.closePath(); ctx.fill(); ctx.stroke();
+    math("D", "ψ", xDe + wDe / 2, y2 + 1, 13);
+    arrow(xR - 2, y2, xDe + wDe + 2, y2);
+
+    ctx.globalAlpha = a * Math.max(0.35, on(0.3));
+    tag("FUTURES", xOut + wOut / 2, y2 - 38);
+    W.forEach((wd, i) => { const m = IDX[i].med; ctx.beginPath();
+      m.forEach((v, d) => { const px = xOut + wOut - d / DAYS * wOut, py = y2 + 22 - (v / TODAY - 0.75) / 0.45 * 44; d ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
+      ctx.strokeStyle = hexA(F[wd.fam].color, 0.75); ctx.lineWidth = 1; ctx.stroke(); });
+    math("x̂", "t+1:t+20", xOut + wOut / 2, y2 + 38, 12);
+    arrow(xDe - 2, y2, xOut + wOut + 2, y2);
+
+    // training signal and the interpretability loop
+    ctx.globalAlpha = a * on(0.3);
+    ctx.font = serif(10); ctx.fillStyle = C.dim; ctx.textAlign = "center";
+    ctx.fillText("trained in latent space:  L = ‖ẑₜ₊₁ − Eᵩ(xₜ₊₁)‖²", L + span / 2, y2 + 60);
+    const notes = [["a", C.gain, xZ - 9, y1 - 18, "Linear probe on z", "t", ": the drawdown subspace tracks financing stress.", 0.4],
+      ["b", C.loss, xD + wD - 8, y1 + 20 + 9, "Failure mode: f", "θ", " moves in small steps, so overnight gaps lie outside its support.", 0.6],
+      ["c", C.blue, xD + 8, y1 + 20 + 9, "Fix: add a jump term J(z", "t", "), then re-test on held-out shocks.", 0.8]];
+    let ny = y2 + 86;
+    notes.forEach(([ch2, col, ax, ay, pre, sub, post, at]) => {
+      const o = on(at); if (o <= 0) { ny += 34; return; }
+      ctx.globalAlpha = a * o; badge(ch2, ax, ay, col); badge(ch2, L + 7, ny, col);
+      const full = pre + "​" + sub + "​" + post, maxW = span - 22; let line = "", yy = ny;
+      const flush = s => { const segs = s.split("​"); let cx = L + 20; segs.forEach((sg, j) => { const isSub = j === 1 && segs.length === 3; ctx.font = isSub ? serif(7.5) : serif(11, false); ctx.fillStyle = C.ink; ctx.textAlign = "left"; ctx.fillText(sg, cx, yy + (isSub ? 3 : 0)); cx += ctx.measureText(sg).width; }); yy += 14; };
+      full.split(" ").forEach(wd => { const test = line ? line + " " + wd : wd; ctx.font = serif(11, false); if (ctx.measureText(test.replace(/​/g, "")).width > maxW && line) { flush(line); line = wd; } else line = test; });
+      if (line) flush(line);
+      ny = Math.max(yy, ny + 14) + 8;
     });
-    ctx.globalAlpha = a; ctx.strokeStyle = C.ink; ctx.fillStyle = C.ink; ctx.lineWidth = LW(1);
-    const [e0x, e0y] = box(0), [s0x, s0y] = box(1), [d0x, d0y] = box(2), [r0x, r0y] = box(3);
-    arrow(e0x + bw + 2, e0y + H / 2, s0x - 3, s0y + H / 2);
-    arrow(s0x + bw / 2, s0y + H + 2, d0x + bw / 2, d0y - 3);
-    arrow(d0x - 2, d0y + H / 2, r0x + bw + 3, r0y + H / 2);
-    const ny = r0y + H + 30, notes = [["PROBE", "drawdown cells track financing stress", C.gain, 0.35], ["BLIND SPOT", "smooth steps only: overnight gaps missed", C.loss, 0.6], ["FIX", "add a jump term to the dynamics", C.blue, 0.8]];
-    notes.forEach(([lab, txt, col, at], i) => {
-      const o = clamp((k - at) * 4); if (o <= 0) return;
-      ctx.globalAlpha = a * o; ctx.font = font(9.5, 600); ctx.fillStyle = col; ctx.fillText(lab, X0, ny + i * 34);
-      ctx.font = font(10); ctx.fillStyle = C.ink; ctx.fillText(txt, X0, ny + i * 34 + 15);
-    });
+    ctx.globalAlpha = a * on(0.85);
+    ctx.font = serif(9.5); ctx.fillStyle = C.dim; ctx.textAlign = "left";
+    ctx.fillText("Figure 2. Schematic of the world model and the interpretability", L, ny + 6);
+    ctx.fillText("loop used to improve it. Illustrative, not a trained model.", L, ny + 19);
     ctx.globalAlpha = 1;
   }
 
